@@ -1,25 +1,15 @@
 from backend.config import settings
-from backend.schemas.state_schema import CognitiveState
-from backend.utils.safety import validate_output
+from backend.schemas.state_schema import RecoveryState, SafetyAssessment
 
 
 class Explainability:
-    """Generate concise, non-clinical explanations for recommendations."""
-
-    def generate(self, state: CognitiveState, recommendation: str) -> str:
-        drivers = []
-        if state.stress >= 0.65:
-            drivers.append("stress is elevated")
-        if state.fatigue >= 0.65:
-            drivers.append("fatigue is elevated")
-        if state.attention <= 0.4:
-            drivers.append("attention is reduced")
-        if not drivers:
-            drivers.append("the current state appears relatively balanced")
-
-        action = recommendation.replace("_", " ")
-        text = (
-            f"Recommended action: {action}. This is based on {', '.join(drivers)} "
-            f"and the simulated recovery profile. {settings.safety_disclaimer}"
+    def generate(self, state: RecoveryState, recommendation: str, safety: SafetyAssessment) -> str:
+        if safety.seek_urgent_care:
+            return f"{safety.message} The app detected: {', '.join(safety.reasons)}. {settings.safety_disclaimer}"
+        if safety.status == "contact_professional":
+            return f"{safety.message} Your symptoms increased after activity, so the next step is to pause and reassess. {settings.safety_disclaimer}"
+        return (
+            f"Your symptom burden is {state.symptom_burden}/10 and your estimated activity tolerance is "
+            f"{state.activity_tolerance}/10. The suggested next step is symptom-guided and does not provide diagnosis or clearance. "
+            f"{settings.safety_disclaimer}"
         )
-        return validate_output(text)

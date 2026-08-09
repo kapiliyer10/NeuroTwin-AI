@@ -9,6 +9,7 @@ backend/data/dataset.csv
 .env
 .env.*
 logs/
+.data/
 node_modules/
 .next/
 frontend/node_modules/

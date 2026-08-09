@@ -1,12 +1,18 @@
 # NeuroTwin AI
 
-NeuroTwin AI is a digital cognitive twin prototype that ingests behavioral signals, estimates cognitive state, simulates likely intervention outcomes, and explains low-risk wellness recommendations.
+NeuroTwin Recovery is a concussion-recovery support prototype that records symptom check-ins, tracks activity tolerance, compares possible next steps, and explains evidence-grounded recommendations.
 
-The current implementation is a runnable first scaffold. It includes a FastAPI backend, deterministic starter state model, simulation and recommendation services, API tests, synthetic data generator, and a minimal dashboard component structure.
+The product is designed for people who have already been evaluated by a healthcare professional. It supports symptom-guided return to daily activity, school, work, and exercise. It does not diagnose concussion, provide treatment, or clear anyone for sport.
 
 ## Safety Notice
 
-NeuroTwin AI is a wellness and productivity-oriented prototype. It must not present outputs as clinical assessment, diagnosis, or treatment. Any medical-adjacent or high-risk output should redirect users toward a qualified professional.
+This is a hackathon prototype and is not medical advice. It cannot diagnose concussion, assess severity, prescribe medication, or provide return-to-play clearance. Red-flag inputs trigger an urgent-care message. Users should follow their healthcare professional's plan.
+
+Evidence sources currently represented in the app:
+
+- [Amsterdam 2022 concussion consensus statement](https://bjsm.bmj.com/content/57/11/695)
+- [Living Concussion Guidelines](https://concussionsontario.org/concussion/guideline-section/return-to-activity_work_school_considerations)
+- [CDC HEADS UP clinical guidance](https://www.cdc.gov/heads-up/hcp/clinical-guidance/index.html)
 
 ## Project Structure
 
@@ -60,34 +66,40 @@ neurotwin-ai/
 
 ## Backend
 
-The backend is built with FastAPI and exposes the first demo flow:
+The backend is built with FastAPI and exposes the recovery flow:
 
-- `POST /ingest`: accepts user signals, extracts normalized features, predicts cognitive state, and records the latest state in memory.
-- `GET /state`: returns the latest cognitive state.
-- `GET /state/history`: returns recent in-memory state records.
-- `POST /simulate`: runs intervention simulations for the latest or supplied state.
-- `GET /recommend`: recommends an intervention and returns a plain-language explanation.
+- `POST /ingest`: records a symptom and activity check-in, runs safety screening, and estimates recovery state.
+- `GET /state`: returns the latest recovery state and evidence references.
+- `GET /state/history`: returns the recent recovery timeline.
+- `DELETE /state`: deletes all local demo check-ins.
+- `POST /simulate`: compares symptom-tolerated next steps.
+- `GET /recommend`: returns the latest recommendation, explanation, safety status, and sources.
 
-### Example Signal Payload
+### Example Check-in Payload
 
 ```json
 {
-  "typing_speed": 52,
-  "pause_variance": 1.8,
-  "sentiment": -0.2,
-  "screen_time": 7
+  "user_id": "demo-user",
+  "clinician_evaluated": true,
+  "recovery_stage": 2,
+  "activity_type": "school",
+  "activity_minutes": 30,
+  "headache": 3,
+  "fatigue": 4,
+  "concentration_difficulty": 4,
+  "symptoms_after_activity": 1
 }
 ```
 
 ## Core Modules
 
-- `SignalFusion`: normalizes raw input signals into model-ready features.
-- `StateModel`: deterministic starter model that estimates stress, fatigue, attention, and emotion.
-- `SimulationEngine`: projects outcomes for `continue`, `short_break`, and `sleep`.
-- `InterventionEngine`: scores simulations and selects the best intervention.
-- `Explainability`: generates concise, non-clinical explanations.
-- `Safety`: blocks diagnosis/treatment language in generated output.
-- `CognitiveLSTM`: optional PyTorch model shell for future time-series training.
+- `SignalFusion`: creates transparent concussion symptom features.
+- `RecoveryStateModel`: interpretable symptom burden, cognitive load, and activity tolerance model.
+- `SimulationEngine`: compares gentle continuation, reduced activity, and rest/check-in options.
+- `InterventionEngine`: applies red-flag overrides before selecting a next step.
+- `Explainability`: produces plain-language explanations with explicit limitations.
+- `evidence.py`: keeps guideline references visible in API and UI responses.
+- `StateStore`: stores check-ins in a local SQLite database with deletion support.
 
 ## Local Setup
 
@@ -157,8 +169,9 @@ NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 npm run dev
 
 ## Current Status
 
-- FastAPI backend scaffold implemented.
-- Signal ingestion, state estimation, simulation, recommendation, explainability, and safety modules implemented.
-- API tests added for the core demo flow.
-- Next.js frontend scaffold added with API-backed dashboard interactions.
-- Next step: add persistence, authentication/user sessions, and a trained model pipeline.
+- Concussion-specific check-in and recovery workflow implemented.
+- Red-flag escalation and professional-care messaging implemented.
+- Guideline references surfaced in the application.
+- SQLite persistence and delete-my-data action implemented for the prototype.
+- Accessible responsive dashboard implemented with symptom trends and what-if comparisons.
+- Remaining work: production authentication, encrypted deployment storage, clinical review, and validated model evaluation.

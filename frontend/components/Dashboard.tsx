@@ -1,167 +1,200 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import Graph from "./Graph";
 import SimulationPanel from "./SimulationPanel";
 
-type CognitiveState = {
-  stress: number;
+type RecoveryState = {
+  symptom_burden: number;
   fatigue: number;
-  attention: number;
-  emotion: number;
+  cognitive_load: number;
+  activity_tolerance: number;
+  trend: string;
+  risk_level: string;
+  stage: number;
 };
 
-type SimulationOutcome = CognitiveState & {
+type SafetyAssessment = {
+  status: string;
+  message: string;
+  reasons: string[];
+  seek_urgent_care: boolean;
+};
+
+type Evidence = { title: string; publisher: string; url: string; reviewed: string };
+type HistoryRecord = { timestamp: string; state: RecoveryState; safety: SafetyAssessment };
+type SimulationOutcome = {
+  action: string;
+  label: string;
+  projected_symptom_burden: number;
+  projected_activity_tolerance: number;
+  safety_status: string;
   summary: string;
-};
-
-type HistoryRecord = {
-  timestamp: string;
-  state: CognitiveState;
 };
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-const demoState = {
-  stress: 0.58,
-  fatigue: 0.54,
-  attention: 0.62,
-  emotion: 0.57,
+const initialState: RecoveryState = {
+  symptom_burden: 2,
+  fatigue: 2,
+  cognitive_load: 2,
+  activity_tolerance: 7.5,
+  trend: "baseline",
+  risk_level: "low",
+  stage: 1,
 };
 
-const demoTrend = [
-  { label: "09:00", stress: 0.38, fatigue: 0.28, attention: 0.78 },
-  { label: "10:00", stress: 0.44, fatigue: 0.34, attention: 0.72 },
-  { label: "11:00", stress: 0.51, fatigue: 0.46, attention: 0.66 },
-  { label: "Now", stress: demoState.stress, fatigue: demoState.fatigue, attention: demoState.attention },
+const initialForm = {
+  user_id: "demo-user",
+  clinician_evaluated: false,
+  recovery_stage: 1,
+  activity_type: "daily",
+  activity_minutes: 15,
+  headache: 1,
+  dizziness: 0,
+  nausea: 0,
+  light_sensitivity: 0,
+  noise_sensitivity: 0,
+  fatigue: 2,
+  sleep_quality: 7,
+  memory_difficulty: 1,
+  concentration_difficulty: 1,
+  balance_problem: 0,
+  mood_change: 0,
+  symptoms_after_activity: 0,
+  symptoms_worsened: false,
+  severe_or_worsening_headache: false,
+  repeated_vomiting: false,
+  seizure_or_fainting: false,
+  confusion_or_slurred_speech: false,
+  weakness_numbness_or_vision_change: false,
+};
+
+const symptomFields = [
+  ["headache", "Headache"],
+  ["dizziness", "Dizziness"],
+  ["nausea", "Nausea"],
+  ["light_sensitivity", "Light sensitivity"],
+  ["noise_sensitivity", "Noise sensitivity"],
+  ["fatigue", "Fatigue"],
+  ["memory_difficulty", "Memory difficulty"],
+  ["concentration_difficulty", "Concentration difficulty"],
+  ["balance_problem", "Balance problems"],
+  ["mood_change", "Mood change"],
 ];
 
-const demoSimulations: Record<string, SimulationOutcome> = {
-  continue: {
-    stress: 0.73,
-    fatigue: 0.66,
-    attention: 0.54,
-    emotion: 0.53,
-    summary: "Continuing may preserve momentum but is likely to increase stress and fatigue.",
-  },
-  short_break: {
-    stress: 0.4,
-    fatigue: 0.46,
-    attention: 0.76,
-    emotion: 0.65,
-    summary: "A short break is projected to reduce stress while improving attention.",
-  },
-  sleep: {
-    stress: 0.23,
-    fatigue: 0.12,
-    attention: 0.9,
-    emotion: 0.69,
-    summary: "Sleep is projected to produce the strongest recovery when fatigue is elevated.",
-  },
-};
-
-const demoRecommendation = "short_break";
+async function request<T>(path: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, options);
+  if (!response.ok) throw new Error((await response.text()) || "The recovery service is unavailable.");
+  return response.json() as Promise<T>;
+}
 
 export default function Dashboard() {
-  const [state, setState] = useState<CognitiveState>(demoState);
+  const [form, setForm] = useState(initialForm);
+  const [state, setState] = useState(initialState);
+  const [safety, setSafety] = useState<SafetyAssessment>({ status: "monitor", message: "Complete a check-in to begin.", reasons: [], seek_urgent_care: false });
   const [history, setHistory] = useState<HistoryRecord[]>([]);
-  const [simulations, setSimulations] = useState<Record<string, SimulationOutcome>>(demoSimulations);
-  const [recommendation, setRecommendation] = useState(demoRecommendation);
-  const [explanation, setExplanation] = useState(
-    "This is based on elevated stress signals and the simulated recovery profile. NeuroTwin AI is a wellness prototype and does not provide medical diagnosis or treatment.",
-  );
+  const [evidence, setEvidence] = useState<Evidence[]>([]);
+  const [simulations, setSimulations] = useState<Record<string, SimulationOutcome>>({});
+  const [recommendation, setRecommendation] = useState("continue_gently");
+  const [explanation, setExplanation] = useState("Your recovery timeline will appear here after your first check-in.");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const trend = useMemo(() => {
-    if (history.length === 0) {
-      return demoTrend;
-    }
-    return history.slice(-8).map((record) => ({
-      label: new Date(record.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      stress: record.state.stress,
-      fatigue: record.state.fatigue,
-      attention: record.state.attention,
-    }));
-  }, [history]);
+  async function refreshHistory() {
+    const result = await request<{ records: HistoryRecord[] }>(`/state/history?limit=12&user_id=${encodeURIComponent(form.user_id)}`);
+    setHistory(result.records);
+  }
 
-  async function runSignalCheck() {
+  async function submitCheckIn(event: FormEvent) {
+    event.preventDefault();
     setIsLoading(true);
+    setError("");
     try {
-      const samplePayload = {
-        typing_speed: 52 + Math.random() * 16,
-        pause_variance: 1.2 + Math.random() * 1.8,
-        sentiment: -0.35 + Math.random() * 0.7,
-        screen_time: 5 + Math.random() * 4,
-      };
-
-      const ingestResponse = await fetch(`${API_BASE_URL}/ingest`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(samplePayload),
-      });
-      const ingestJson = await ingestResponse.json();
-      setState(ingestJson.state);
-
-      const simulationResponse = await fetch(`${API_BASE_URL}/simulate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const simulationJson = await simulationResponse.json();
-      setSimulations(simulationJson.simulations);
-
-      const recommendResponse = await fetch(`${API_BASE_URL}/recommend`);
-      const recommendJson = await recommendResponse.json();
-      setRecommendation(recommendJson.recommendation);
-      setExplanation(recommendJson.explanation);
-
-      const historyResponse = await fetch(`${API_BASE_URL}/state/history?limit=8`);
-      const historyJson = await historyResponse.json();
-      setHistory(historyJson.records ?? []);
+      const result = await request<{
+        state: RecoveryState;
+        safety: SafetyAssessment;
+        recommendation: string;
+        explanation: string;
+        evidence: Evidence[];
+      }>("/ingest", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      setState(result.state);
+      setSafety(result.safety);
+      setRecommendation(result.recommendation);
+      setExplanation(result.explanation);
+      setEvidence(result.evidence);
+      const simulation = await request<{ simulations: Record<string, SimulationOutcome> }>("/simulate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+      setSimulations(simulation.simulations);
+      await refreshHistory();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to save the check-in.");
     } finally {
       setIsLoading(false);
     }
   }
 
+  async function deleteData() {
+    if (!window.confirm("Delete all recovery check-ins from this demo?")) return;
+    await fetch(`${API_BASE_URL}/state?user_id=${encodeURIComponent(form.user_id)}`, { method: "DELETE" });
+    setHistory([]);
+    setEvidence([]);
+    setSimulations({});
+    setState(initialState);
+    setSafety({ status: "monitor", message: "Your local recovery data was deleted.", reasons: [], seek_urgent_care: false });
+  }
+
   useEffect(() => {
-    void runSignalCheck();
+    void refreshHistory().catch(() => undefined);
   }, []);
+
+  const trend = useMemo(() => history.map((record) => ({
+    label: new Date(record.timestamp).toLocaleDateString([], { month: "short", day: "numeric" }),
+    symptom_burden: record.state.symptom_burden,
+    activity_tolerance: record.state.activity_tolerance,
+  })), [history]);
+
+  function updateField(name: string, value: string | number | boolean) {
+    setForm((current) => ({ ...current, [name]: value }));
+  }
 
   return (
     <main className="dashboard">
-      <section className="intro">
+      <header className="intro">
         <div>
-          <p className="eyebrow">Digital cognitive twin</p>
-          <h1>NeuroTwin AI</h1>
+          <p className="eyebrow">Symptom-guided recovery support</p>
+          <h1>NeuroTwin Recovery</h1>
+          <p className="subtitle">A private, evidence-grounded companion for returning to daily activity after a clinician-evaluated concussion.</p>
         </div>
-        <button type="button" onClick={runSignalCheck} disabled={isLoading}>
-          {isLoading ? "Checking..." : "Run signal check"}
-        </button>
-      </section>
+        <button className="quietButton" type="button" onClick={deleteData}>Delete my data</button>
+      </header>
 
-      <section className="metrics" aria-label="Current cognitive state">
-        {Object.entries(state).map(([label, value]) => (
-          <article className="metric" key={label}>
-            <span>{label}</span>
-            <strong>{Math.round(value * 100)}%</strong>
-            <meter min="0" max="1" value={value} aria-label={label} />
-          </article>
-        ))}
-      </section>
+      {error && <div className="alert error" role="alert">{error}</div>}
+      {safety.status !== "monitor" && <div className={`alert ${safety.seek_urgent_care ? "urgent" : "caution"}`} role="alert"><strong>{safety.message}</strong>{safety.reasons.length > 0 && <span> Detected: {safety.reasons.join(", ")}.</span>}</div>}
 
-      <div className="contentGrid">
-        <Graph points={trend} />
-        <section className="panel recommendation">
-          <div className="panelHeader">
-            <h2>Recommendation</h2>
+      <div className="mainGrid">
+        <form className="panel checkIn" onSubmit={submitCheckIn}>
+          <div className="panelHeader"><div><p className="eyebrow">Daily check-in</p><h2>How are your symptoms today?</h2></div><span className="scaleHint">0 = none · 10 = severe</span></div>
+          <div className="formRow twoColumns">
+            <label>Activity type<select value={form.activity_type} onChange={(event) => updateField("activity_type", event.target.value)}>{["daily", "school", "work", "screen", "walking", "exercise", "sport"].map((value) => <option key={value}>{value}</option>)}</select></label>
+            <label>Minutes today<input type="number" min="0" max="1440" value={form.activity_minutes} onChange={(event) => updateField("activity_minutes", Number(event.target.value))} /></label>
           </div>
-          <strong>{recommendation.replace("_", " ")}</strong>
-          <p>{explanation}</p>
-        </section>
+          <div className="symptomGrid">{symptomFields.map(([name, label]) => <label key={name}>{label}<input type="range" min="0" max="10" value={form[name as keyof typeof form] as number} onChange={(event) => updateField(name, Number(event.target.value))} /><output>{form[name as keyof typeof form]}</output></label>)}</div>
+          <div className="formRow twoColumns">
+            <label>Symptoms after activity<input type="range" min="0" max="10" value={form.symptoms_after_activity} onChange={(event) => updateField("symptoms_after_activity", Number(event.target.value))} /><output>{form.symptoms_after_activity}</output></label>
+            <label>Recovery stage<select value={form.recovery_stage} onChange={(event) => updateField("recovery_stage", Number(event.target.value))}>{[1, 2, 3, 4, 5, 6].map((stage) => <option key={stage} value={stage}>Stage {stage}</option>)}</select></label>
+          </div>
+          <label className="checkbox"><input type="checkbox" checked={form.clinician_evaluated} onChange={(event) => updateField("clinician_evaluated", event.target.checked)} /> I have been evaluated by a healthcare professional</label>
+          <label className="checkbox"><input type="checkbox" checked={form.symptoms_worsened} onChange={(event) => updateField("symptoms_worsened", event.target.checked)} /> My symptoms are worse than my recent baseline</label>
+          <details className="safetyDetails"><summary>Safety check</summary><div className="checkboxList">{([["severe_or_worsening_headache", "Severe or worsening headache"], ["repeated_vomiting", "Repeated vomiting"], ["seizure_or_fainting", "Seizure or fainting"], ["confusion_or_slurred_speech", "Confusion or slurred speech"], ["weakness_numbness_or_vision_change", "Weakness, numbness, or vision changes"]] as const).map(([name, label]) => <label className="checkbox" key={name}><input type="checkbox" checked={form[name]} onChange={(event) => updateField(name, event.target.checked)} /> {label}</label>)}</div></details>
+          <button className="primaryButton" type="submit" disabled={isLoading}>{isLoading ? "Saving check-in..." : "Save check-in"}</button>
+        </form>
+
+        <section className="panel nextStep"><div className="panelHeader"><div><p className="eyebrow">Your next step</p><h2>{recommendation.replaceAll("_", " ")}</h2></div><span className={`status ${safety.status}`}>{safety.status.replaceAll("_", " ")}</span></div><p>{explanation}</p><div className="stateList"><div><span>Symptom burden</span><strong>{state.symptom_burden}/10</strong></div><div><span>Activity tolerance</span><strong>{state.activity_tolerance}/10</strong></div><div><span>Recovery trend</span><strong>{state.trend}</strong></div><div><span>Current stage</span><strong>{state.stage} of 6</strong></div></div></section>
       </div>
 
-      <SimulationPanel simulations={simulations} recommendation={recommendation} />
+      <div className="contentGrid"><Graph points={trend} /><section className="panel evidence"><div className="panelHeader"><div><p className="eyebrow">Transparent by design</p><h2>Evidence and limits</h2></div></div><p>Recommendations are symptom-guided. They do not diagnose concussion or provide medical clearance.</p>{evidence.map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer">{item.title}<small>{item.publisher}</small></a>)}</section></div>
+      {Object.keys(simulations).length > 0 && <SimulationPanel simulations={simulations} recommendation={recommendation} />}
     </main>
   );
 }
