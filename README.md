@@ -105,6 +105,8 @@ Run the API on Windows:
 .\run.ps1
 ```
 
+The script launches Uvicorn through Python, so the standalone `uvicorn` command does not need to be on your `PATH`.
+
 Run the API on macOS/Linux:
 
 ```bash
