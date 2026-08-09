@@ -1,24 +1,14 @@
 # NeuroTwin AI
 
-NeuroTwin AI is planned as a digital cognitive twin system that ingests behavioral and contextual signals, estimates cognitive state, simulates possible interventions, and explains recommendations through a modular AI backend and dashboard.
+NeuroTwin AI is a digital cognitive twin prototype that ingests behavioral signals, estimates cognitive state, simulates likely intervention outcomes, and explains low-risk wellness recommendations.
 
-This repository currently contains the project baseline and implementation plan. The first production scaffold will be built from the included architecture described below.
+The current implementation is a runnable first scaffold. It includes a FastAPI backend, deterministic starter state model, simulation and recommendation services, API tests, synthetic data generator, and a minimal dashboard component structure.
 
-## Vision
+## Safety Notice
 
-NeuroTwin AI is designed to help model short-term mental state patterns such as stress, fatigue, attention, and emotional load from user signals. The system is intended for wellness-oriented recommendations and simulation, not medical diagnosis.
+NeuroTwin AI is a wellness and productivity-oriented prototype. It must not present outputs as clinical assessment, diagnosis, or treatment. Any medical-adjacent or high-risk output should redirect users toward a qualified professional.
 
-Core goals:
-
-- Ingest time-series user signals such as typing speed, pause variance, sentiment, and screen time.
-- Fuse raw signals into model-ready features.
-- Predict cognitive state with a modular ML wrapper, initially backed by a dummy model or LSTM.
-- Simulate outcomes for actions such as continuing work, taking a break, or sleeping.
-- Recommend a low-risk intervention based on simulated outcomes.
-- Explain state and recommendations in plain language with safety guardrails.
-- Present the state, trends, simulations, and recommendation in a simple frontend dashboard.
-
-## Planned Architecture
+## Project Structure
 
 ```text
 neurotwin-ai/
@@ -33,6 +23,7 @@ neurotwin-ai/
 │   ├── services/
 │   │   ├── signal_fusion.py
 │   │   ├── state_model.py
+│   │   ├── state_store.py
 │   │   ├── simulation_engine.py
 │   │   ├── intervention_engine.py
 │   │   └── explainability.py
@@ -44,79 +35,128 @@ neurotwin-ai/
 │   │   ├── state_schema.py
 │   │   └── simulation_schema.py
 │   ├── data/
-│   │   ├── generator.py
-│   │   └── dataset.csv
+│   │   └── generator.py
 │   ├── utils/
 │   │   └── safety.py
 │   └── tests/
 │       └── test_api.py
 ├── frontend/
 │   ├── pages/
+│   │   ├── _app.tsx
 │   │   └── index.tsx
-│   └── components/
-│       ├── Dashboard.tsx
-│       ├── Graph.tsx
-│       └── SimulationPanel.tsx
+│   ├── components/
+│   │   ├── Dashboard.tsx
+│   │   ├── Graph.tsx
+│   │   └── SimulationPanel.tsx
+│   ├── styles.css
+│   ├── package.json
+│   └── tsconfig.json
 ├── requirements.txt
-├── README.md
-└── run.sh
+├── pyproject.toml
+├── run.ps1
+├── run.sh
+└── README.md
 ```
 
-## Backend Plan
+## Backend
 
-The backend will use FastAPI with separated routers for ingestion, state lookup, simulation, and recommendations.
+The backend is built with FastAPI and exposes the first demo flow:
 
-Planned endpoints:
+- `POST /ingest`: accepts user signals, extracts normalized features, predicts cognitive state, and records the latest state in memory.
+- `GET /state`: returns the latest cognitive state.
+- `GET /state/history`: returns recent in-memory state records.
+- `POST /simulate`: runs intervention simulations for the latest or supplied state.
+- `GET /recommend`: recommends an intervention and returns a plain-language explanation.
 
-- `POST /ingest`: accepts user signal input, extracts features, predicts the current cognitive state, and returns state metrics.
-- `GET /state`: returns the latest estimated cognitive state.
-- `POST /simulate`: runs intervention simulations against a provided or latest state.
-- `GET /recommend`: returns the recommended intervention and explanation.
+### Example Signal Payload
+
+```json
+{
+  "typing_speed": 52,
+  "pause_variance": 1.8,
+  "sentiment": -0.2,
+  "screen_time": 7
+}
+```
 
 ## Core Modules
 
-- `SignalFusion`: converts raw input signals into numeric model features.
-- `StateModel`: wraps cognitive-state prediction and hides model-loading details from API routes.
-- `CognitiveLSTM`: planned PyTorch LSTM for time-series prediction.
-- `SimulationEngine`: estimates how candidate actions may affect stress or related state values.
-- `InterventionEngine`: selects the best intervention from simulation results.
-- `Explainability`: generates user-facing explanations for state and recommendations.
-- `Safety`: prevents medical-diagnosis language and redirects high-risk output toward professional guidance.
+- `SignalFusion`: normalizes raw input signals into model-ready features.
+- `StateModel`: deterministic starter model that estimates stress, fatigue, attention, and emotion.
+- `SimulationEngine`: projects outcomes for `continue`, `short_break`, and `sleep`.
+- `InterventionEngine`: scores simulations and selects the best intervention.
+- `Explainability`: generates concise, non-clinical explanations.
+- `Safety`: blocks diagnosis/treatment language in generated output.
+- `CognitiveLSTM`: optional PyTorch model shell for future time-series training.
 
-## Frontend Plan
+## Local Setup
 
-The frontend will provide a minimal dashboard showing:
-
-- Current stress or cognitive-state indicators.
-- Historical trend graph.
-- Simulation results by action.
-- Recommended intervention.
-- Plain-language explanation.
-
-## Intended Local Run Flow
-
-Once scaffolded, the expected local backend workflow will be:
+Create and activate a virtual environment:
 
 ```bash
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+Run the API on Windows:
+
+```powershell
+.\run.ps1
+```
+
+Run the API on macOS/Linux:
+
+```bash
+./run.sh
+```
+
+Or run directly:
+
+```bash
 uvicorn backend.main:app --reload
 ```
 
-Expected demo flow:
+Open the API docs at `http://127.0.0.1:8000/docs`.
 
-1. Send signal input to `/ingest`.
-2. Receive estimated cognitive state.
-3. Run `/simulate` against that state.
-4. Fetch `/recommend`.
-5. Display the explanation and recommendation in the dashboard.
+## Testing
 
-## Safety Notice
+```bash
+pytest
+```
 
-NeuroTwin AI is a wellness and productivity-oriented prototype. It must not present outputs as clinical assessment, diagnosis, or treatment. Any high-risk or medical-adjacent output should be guarded with a recommendation to consult a qualified professional.
+## Synthetic Data
+
+Generate a starter CSV dataset:
+
+```bash
+python -m backend.data.generator
+```
+
+## Frontend
+
+The frontend is a Next.js dashboard in `frontend/`. It starts with demo data and calls the FastAPI backend at `http://127.0.0.1:8000` by default.
+
+Run it in a second terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`.
+
+To point the frontend at another backend URL:
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000 npm run dev
+```
 
 ## Current Status
 
-- Repository initialized.
-- Project specification reviewed.
-- README baseline created from the implementation document.
-- Full application scaffold is the next implementation step.
+- FastAPI backend scaffold implemented.
+- Signal ingestion, state estimation, simulation, recommendation, explainability, and safety modules implemented.
+- API tests added for the core demo flow.
+- Next.js frontend scaffold added with API-backed dashboard interactions.
+- Next step: add persistence, authentication/user sessions, and a trained model pipeline.
