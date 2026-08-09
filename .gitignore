@@ -8,6 +8,7 @@ venv/
 backend/data/dataset.csv
 .env
 .env.*
+logs/
 node_modules/
 .next/
 frontend/node_modules/
