@@ -88,3 +88,14 @@ def test_users_do_not_share_recovery_history() -> None:
     assert alice.status_code == 200
     assert bob.status_code == 200
     assert alice.json()["state"]["symptom_burden"] < bob.json()["state"]["symptom_burden"]
+
+
+def test_sport_activity_never_implies_clearance() -> None:
+    response = client.post(
+        "/ingest",
+        json={"activity_type": "sport", "recovery_stage": 3, "clinician_evaluated": False},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["safety"]["status"] == "contact_professional"
+    assert body["recommendation"] == "pause_and_contact_professional"

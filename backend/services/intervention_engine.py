@@ -24,6 +24,12 @@ class InterventionEngine:
                 reasons=reasons,
                 seek_urgent_care=True,
             )
+        if data.activity_type.value == "sport" and (not data.clinician_evaluated or data.recovery_stage < 4):
+            return SafetyAssessment(
+                status="contact_professional",
+                message="Do not use this app as sport clearance. Stop contact-risk activity and follow your healthcare professional's return-to-sport plan.",
+                reasons=["sport activity requires a healthcare professional's clearance"],
+            )
         if data.symptoms_worsened or data.symptoms_after_activity >= 3:
             return SafetyAssessment(
                 status="contact_professional",
