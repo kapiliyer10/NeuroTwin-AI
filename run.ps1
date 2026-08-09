@@ -1,8 +1,10 @@
 $ErrorActionPreference = "Stop"
 
 $pythonCandidates = @(
+    (Get-Command "$PSScriptRoot\.venv\Scripts\python.exe" -ErrorAction SilentlyContinue),
     (Get-Command python -ErrorAction SilentlyContinue),
-    (Get-Command py -ErrorAction SilentlyContinue)
+    (Get-Command py -ErrorAction SilentlyContinue),
+    (Get-Command "$env:USERPROFILE\.cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe" -ErrorAction SilentlyContinue)
 )
 $pythonCommand = $null
 $previousErrorActionPreference = $ErrorActionPreference
