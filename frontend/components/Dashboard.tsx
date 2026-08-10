@@ -257,7 +257,7 @@ export default function Dashboard() {
 
       <div className="mainGrid">
         <form className="panel checkIn" onSubmit={submitCheckIn}>
-          <div className="panelHeader"><div><p className="eyebrow">Daily check-in</p><h2>How are your symptoms today?</h2></div><span className="scaleHint">0 = none · 10 = severe</span></div>
+          <div className="panelHeader"><div><p className="eyebrow">Daily check-in</p><h2>{selectedPurpose === "concussion" ? "How are your symptoms today?" : "How has your wellbeing been today?"}</h2></div><span className="scaleHint">{selectedPurpose === "concussion" ? "0 = none · 10 = severe" : "Use the guide below for each scale"}</span></div>
           <div className="formRow twoColumns">
             {selectedPurpose === "concussion" ? <label>Activity type<select value={form.activity_type} onChange={(event) => updateField("activity_type", event.target.value)}>{["daily", "school", "work", "screen", "walking", "exercise", "sport"].map((value) => <option key={value}>{value}</option>)}</select><small className="fieldHint">What activity did you do or plan to do?</small></label> : <label>Check-in context<select value={form.activity_type} onChange={(event) => updateField("activity_type", event.target.value)}>{["daily", "school", "work", "screen"].map((value) => <option key={value}>{value}</option>)}</select><small className="fieldHint">What part of your day are you reflecting on?</small></label>}
             <label>Minutes today<input type="number" min="0" max="1440" value={form.activity_minutes} onChange={(event) => updateField("activity_minutes", Number(event.target.value))} /></label>
