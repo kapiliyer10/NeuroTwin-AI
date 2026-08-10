@@ -12,6 +12,12 @@ class Explainability:
             else:
                 reason_text = "The check-in included symptom levels that should be discussed with a healthcare professional."
             return f"{safety.message} {reason_text} {settings.safety_disclaimer}"
+        if state.purpose == "mental_wellbeing":
+            return (
+                f"Your wellbeing strain is {state.symptom_burden}/10 and your prototype capacity estimate is "
+                f"{state.activity_tolerance}/10. The suggested next step is supportive reflection, not a mental-health diagnosis or treatment. "
+                f"{settings.safety_disclaimer}"
+            )
         return (
             f"Your symptom burden is {state.symptom_burden}/10 and your estimated activity tolerance is "
             f"{state.activity_tolerance}/10. The suggested next step is symptom-guided and does not provide diagnosis or clearance. "

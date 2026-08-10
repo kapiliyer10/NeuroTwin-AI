@@ -29,6 +29,6 @@ def ingest_data(data: InputSchema) -> StateResponse:
         safety=safety,
         recommendation=recommendation,
         explanation=explanation,
-        evidence=[EvidenceReference(**item) for item in evidence_references()],
+        evidence=[EvidenceReference(**item) for item in evidence_references(data.purpose.value)],
         message="Check-in recorded. Follow your healthcare professional's plan.",
     )

@@ -1,4 +1,19 @@
-def evidence_references() -> list[dict[str, str]]:
+def evidence_references(purpose: str = "concussion") -> list[dict[str, str]]:
+    if purpose == "mental_wellbeing":
+        return [
+            {
+                "title": "Mental health: strengthening our response",
+                "publisher": "World Health Organization",
+                "url": "https://www.who.int/news-room/fact-sheets/detail/mental-health-strengthening-our-response",
+                "reviewed": "2026-08-10",
+            },
+            {
+                "title": "Guidelines on mental health at work",
+                "publisher": "World Health Organization",
+                "url": "https://www.who.int/publications/i/item/9789240053052",
+                "reviewed": "2026-08-10",
+            },
+        ]
     return [
         {
             "title": "Consensus statement on concussion in sport: Amsterdam 2022",

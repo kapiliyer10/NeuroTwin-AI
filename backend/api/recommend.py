@@ -22,6 +22,6 @@ def recommend(user_id: str = Query(default="demo-user", min_length=1, max_length
         recommendation=recommendation,
         explanation=Explainability().generate(latest.state, recommendation, latest.safety),
         safety=latest.safety.status,
-        evidence=evidence_references(),
+        evidence=evidence_references(latest.input_data.purpose.value),
         simulations=simulations,
     )

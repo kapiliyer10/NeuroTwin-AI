@@ -6,6 +6,7 @@ from backend.schemas.input_schema import InputSchema
 
 
 class RecoveryState(BaseModel):
+    purpose: str
     symptom_burden: float = Field(..., ge=0, le=10)
     fatigue: float = Field(..., ge=0, le=10)
     cognitive_load: float = Field(..., ge=0, le=10)

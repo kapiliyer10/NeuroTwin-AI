@@ -25,6 +25,7 @@ class RecoveryStateModel:
 
         risk_level = "high" if data.symptoms_worsened else "moderate" if burden >= 5 else "low"
         return RecoveryState(
+            purpose=data.purpose.value,
             symptom_burden=round(burden, 2),
             fatigue=round(features["fatigue"], 2),
             cognitive_load=round(cognitive_load, 2),

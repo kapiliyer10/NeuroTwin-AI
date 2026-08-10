@@ -14,8 +14,14 @@ class ActivityType(str, Enum):
     sport = "sport"
 
 
+class Purpose(str, Enum):
+    concussion = "concussion"
+    mental_wellbeing = "mental_wellbeing"
+
+
 class InputSchema(BaseModel):
     user_id: str = Field(default="demo-user", min_length=1, max_length=64)
+    purpose: Purpose
     injury_date: date | None = None
     clinician_evaluated: bool = False
     recovery_stage: int = Field(default=1, ge=1, le=6)
@@ -32,6 +38,12 @@ class InputSchema(BaseModel):
     concentration_difficulty: int = Field(default=0, ge=0, le=10)
     balance_problem: int = Field(default=0, ge=0, le=10)
     mood_change: int = Field(default=0, ge=0, le=10)
+    stress_level: int = Field(default=0, ge=0, le=10)
+    mood: int = Field(default=5, ge=0, le=10)
+    social_connection: int = Field(default=5, ge=0, le=10)
+    workload_pressure: int = Field(default=0, ge=0, le=10)
+    feeling_unsafe: bool = False
+    self_harm_thoughts: bool = False
     symptoms_after_activity: int = Field(default=0, ge=0, le=10)
     symptoms_worsened: bool = False
     severe_or_worsening_headache: bool = False

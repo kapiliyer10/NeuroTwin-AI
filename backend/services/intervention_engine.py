@@ -6,6 +6,13 @@ from backend.schemas.state_schema import SafetyAssessment
 class InterventionEngine:
     def assess_safety(self, data: InputSchema) -> SafetyAssessment:
         reasons: list[str] = []
+        if data.purpose.value == "mental_wellbeing" and (data.feeling_unsafe or data.self_harm_thoughts):
+            return SafetyAssessment(
+                status="urgent",
+                message="You may need immediate support. Contact local emergency services or a crisis service, and reach out to someone you trust now.",
+                reasons=["user reported feeling unsafe or thoughts of self-harm"],
+                seek_urgent_care=True,
+            )
         if data.severe_or_worsening_headache:
             reasons.append("severe or worsening headache")
         if data.repeated_vomiting:

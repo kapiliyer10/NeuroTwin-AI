@@ -6,6 +6,7 @@ import Graph from "./Graph";
 import SimulationPanel from "./SimulationPanel";
 
 type RecoveryState = {
+  purpose: string;
   symptom_burden: number;
   fatigue: number;
   cognitive_load: number;
@@ -33,9 +34,12 @@ type SimulationOutcome = {
   summary: string;
 };
 
+type Purpose = "concussion" | "mental_wellbeing";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
 const initialState: RecoveryState = {
+  purpose: "concussion",
   symptom_burden: 2,
   fatigue: 2,
   cognitive_load: 2,
@@ -47,6 +51,7 @@ const initialState: RecoveryState = {
 
 const initialForm = {
   user_id: "demo-user",
+  purpose: "concussion" as Purpose,
   clinician_evaluated: false,
   recovery_stage: 1,
   activity_type: "daily",
@@ -69,6 +74,12 @@ const initialForm = {
   seizure_or_fainting: false,
   confusion_or_slurred_speech: false,
   weakness_numbness_or_vision_change: false,
+  stress_level: 0,
+  mood: 5,
+  social_connection: 5,
+  workload_pressure: 0,
+  feeling_unsafe: false,
+  self_harm_thoughts: false,
 };
 
 const symptomFields = [
@@ -84,6 +95,15 @@ const symptomFields = [
   ["mood_change", "Mood change"],
 ];
 
+const wellbeingFields = [
+  ["stress_level", "Stress level"],
+  ["mood", "Mood today"],
+  ["sleep_quality", "Sleep quality"],
+  ["concentration_difficulty", "Focus difficulty"],
+  ["workload_pressure", "Workload pressure"],
+  ["social_connection", "Social connection"],
+];
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, options);
   if (!response.ok) throw new Error((await response.text()) || "The recovery service is unavailable.");
@@ -92,6 +112,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
 export default function Dashboard() {
   const [form, setForm] = useState(initialForm);
+  const [selectedPurpose, setSelectedPurpose] = useState<Purpose | null>(null);
   const [state, setState] = useState(initialState);
   const [safety, setSafety] = useState<SafetyAssessment>({ status: "monitor", message: "Complete a check-in to begin.", reasons: [], seek_urgent_care: false });
   const [history, setHistory] = useState<HistoryRecord[]>([]);
@@ -164,13 +185,33 @@ export default function Dashboard() {
     setForm((current) => ({ ...current, [name]: value }));
   }
 
+  function choosePurpose(purpose: Purpose) {
+    setSelectedPurpose(purpose);
+    setForm((current) => ({ ...current, purpose }));
+  }
+
+  if (!selectedPurpose) {
+    return (
+      <main className="purposeGate">
+        <div className="purposeBrand"><p className="eyebrow">Symptom-guided support</p><span className="demoBadge">Prototype demo</span></div>
+        <h1>NeuroTwin</h1>
+        <p className="purposeLead">What kind of support are you looking for today?</p>
+        <div className="purposeChoices">
+          <button type="button" className="purposeChoice" onClick={() => choosePurpose("concussion")}><span className="purposeNumber">01</span><strong>Concussion recovery</strong><small>Track symptoms and activity while returning to daily life.</small></button>
+          <button type="button" className="purposeChoice" onClick={() => choosePurpose("mental_wellbeing")}><span className="purposeNumber">02</span><strong>Mental wellbeing</strong><small>Reflect on stress, mood, sleep, workload, and connection.</small></button>
+        </div>
+        <p className="purposeLimit">This prototype offers supportive guidance, not diagnosis or treatment.</p>
+      </main>
+    );
+  }
+
   return (
     <main className="dashboard">
       <header className="intro">
         <div>
-          <div className="eyebrowLine"><p className="eyebrow">Symptom-guided recovery support</p><span className="demoBadge">Prototype demo</span></div>
-          <h1>NeuroTwin Recovery</h1>
-          <p className="subtitle">A private, evidence-grounded companion for returning to daily activity after a clinician-evaluated concussion.</p>
+          <div className="eyebrowLine"><p className="eyebrow">{selectedPurpose === "concussion" ? "Concussion recovery support" : "Mental wellbeing support"}</p><span className="demoBadge">Prototype demo</span></div>
+          <h1>NeuroTwin {selectedPurpose === "concussion" ? "Recovery" : "Wellbeing"}</h1>
+          <p className="subtitle">{selectedPurpose === "concussion" ? "A private, evidence-grounded companion for returning to daily activity after a clinician-evaluated concussion." : "A private reflection space for noticing stress, mood, sleep, workload, and connection without diagnosing mental health conditions."}</p>
         </div>
         <button className="quietButton" type="button" onClick={deleteData}>Delete my data</button>
       </header>
@@ -185,21 +226,20 @@ export default function Dashboard() {
             <label>Activity type<select value={form.activity_type} onChange={(event) => updateField("activity_type", event.target.value)}>{["daily", "school", "work", "screen", "walking", "exercise", "sport"].map((value) => <option key={value}>{value}</option>)}</select></label>
             <label>Minutes today<input type="number" min="0" max="1440" value={form.activity_minutes} onChange={(event) => updateField("activity_minutes", Number(event.target.value))} /></label>
           </div>
-          <div className="symptomGrid">{symptomFields.map(([name, label]) => <label key={name}>{label}<input type="range" min="0" max="10" value={form[name as keyof typeof form] as number} onChange={(event) => updateField(name, Number(event.target.value))} /><output>{form[name as keyof typeof form]}</output></label>)}</div>
+          <div className="symptomGrid">{(selectedPurpose === "concussion" ? symptomFields : wellbeingFields).map(([name, label]) => <label key={name}>{label}<input type="range" min="0" max="10" value={form[name as keyof typeof form] as number} onChange={(event) => updateField(name, Number(event.target.value))} /><output>{form[name as keyof typeof form]}</output></label>)}</div>
           <div className="formRow twoColumns">
             <label>Symptoms after activity<input type="range" min="0" max="10" value={form.symptoms_after_activity} onChange={(event) => updateField("symptoms_after_activity", Number(event.target.value))} /><output>{form.symptoms_after_activity}</output></label>
-            <label>Recovery stage<select value={form.recovery_stage} onChange={(event) => updateField("recovery_stage", Number(event.target.value))}>{[1, 2, 3, 4, 5, 6].map((stage) => <option key={stage} value={stage}>Stage {stage}</option>)}</select><small className="fieldHint">Use the stage provided by your healthcare professional.</small></label>
+            {selectedPurpose === "concussion" ? <label>Recovery stage<select value={form.recovery_stage} onChange={(event) => updateField("recovery_stage", Number(event.target.value))}>{[1, 2, 3, 4, 5, 6].map((stage) => <option key={stage} value={stage}>Stage {stage}</option>)}</select><small className="fieldHint">Use the stage provided by your healthcare professional.</small></label> : <label>Check-in context<select value={form.activity_type} onChange={(event) => updateField("activity_type", event.target.value)}>{["daily", "school", "work", "screen"].map((value) => <option key={value}>{value}</option>)}</select><small className="fieldHint">Choose the context that best matches today.</small></label>}
           </div>
-          <label className="checkbox"><input type="checkbox" checked={form.clinician_evaluated} onChange={(event) => updateField("clinician_evaluated", event.target.checked)} /> I have been evaluated by a healthcare professional</label>
-          <label className="checkbox"><input type="checkbox" checked={form.symptoms_worsened} onChange={(event) => updateField("symptoms_worsened", event.target.checked)} /> My symptoms are worse than my recent baseline</label>
-          <details className="safetyDetails"><summary>Safety check</summary><div className="checkboxList">{([["severe_or_worsening_headache", "Severe or worsening headache"], ["repeated_vomiting", "Repeated vomiting"], ["seizure_or_fainting", "Seizure or fainting"], ["confusion_or_slurred_speech", "Confusion or slurred speech"], ["weakness_numbness_or_vision_change", "Weakness, numbness, or vision changes"]] as const).map(([name, label]) => <label className="checkbox" key={name}><input type="checkbox" checked={form[name]} onChange={(event) => updateField(name, event.target.checked)} /> {label}</label>)}</div></details>
+          {selectedPurpose === "concussion" && <><label className="checkbox"><input type="checkbox" checked={form.clinician_evaluated} onChange={(event) => updateField("clinician_evaluated", event.target.checked)} /> I have been evaluated by a healthcare professional</label><label className="checkbox"><input type="checkbox" checked={form.symptoms_worsened} onChange={(event) => updateField("symptoms_worsened", event.target.checked)} /> My symptoms are worse than my recent baseline</label><details className="safetyDetails"><summary>Safety check</summary><div className="checkboxList">{([["severe_or_worsening_headache", "Severe or worsening headache"], ["repeated_vomiting", "Repeated vomiting"], ["seizure_or_fainting", "Seizure or fainting"], ["confusion_or_slurred_speech", "Confusion or slurred speech"], ["weakness_numbness_or_vision_change", "Weakness, numbness, or vision changes"]] as const).map(([name, label]) => <label className="checkbox" key={name}><input type="checkbox" checked={form[name]} onChange={(event) => updateField(name, event.target.checked)} /> {label}</label>)}</div></details></>}
+          {selectedPurpose === "mental_wellbeing" && <details className="safetyDetails"><summary>Private safety check</summary><div className="checkboxList"><label className="checkbox"><input type="checkbox" checked={form.feeling_unsafe} onChange={(event) => updateField("feeling_unsafe", event.target.checked)} /> I feel unsafe right now</label><label className="checkbox"><input type="checkbox" checked={form.self_harm_thoughts} onChange={(event) => updateField("self_harm_thoughts", event.target.checked)} /> I am having thoughts of harming myself</label><small className="fieldHint">If either is selected, the app will encourage immediate local support.</small></div></details>}
           <button className="primaryButton" type="submit" disabled={isLoading}>{isLoading ? "Saving check-in..." : "Save check-in"}</button>
         </form>
 
-        <section className="panel nextStep"><div className="panelHeader"><div><p className="eyebrow">Your next step</p><h2>{hasCheckIn ? recommendation.replaceAll("_", " ") : "Complete a check-in to begin"}</h2></div>{hasCheckIn && <span className={`status ${safety.status}`}>{safety.status.replaceAll("_", " ")}</span>}</div><p>{hasCheckIn ? explanation : "Your recommendation will be based on your symptoms and activity after you save your first check-in."}</p><div className="stateList"><div><span>Symptom burden</span><strong>{hasCheckIn ? `${state.symptom_burden}/10` : "Not recorded"}</strong></div><div><span>Prototype tolerance estimate</span><strong>{hasCheckIn ? `${state.activity_tolerance}/10` : "Not recorded"}</strong></div><div><span>Recovery trend</span><strong>{hasCheckIn ? state.trend : "Waiting"}</strong></div><div><span>Current stage</span><strong>{state.stage} of 6</strong></div>{lastUpdated && <div><span>Last updated</span><strong>{lastUpdated}</strong></div>}</div></section>
+        <section className="panel nextStep"><div className="panelHeader"><div><p className="eyebrow">Your next step</p><h2>{hasCheckIn ? recommendation.replaceAll("_", " ") : "Complete a check-in to begin"}</h2></div>{hasCheckIn && <span className={`status ${safety.status}`}>{safety.status.replaceAll("_", " ")}</span>}</div><p>{hasCheckIn ? explanation : "Your recommendation will be based on your check-in after you save it."}</p><div className="stateList"><div><span>{selectedPurpose === "concussion" ? "Symptom burden" : "Wellbeing strain"}</span><strong>{hasCheckIn ? `${state.symptom_burden}/10` : "Not recorded"}</strong></div><div><span>{selectedPurpose === "concussion" ? "Prototype tolerance estimate" : "Prototype capacity estimate"}</span><strong>{hasCheckIn ? `${state.activity_tolerance}/10` : "Not recorded"}</strong></div><div><span>Trend</span><strong>{hasCheckIn ? state.trend : "Waiting"}</strong></div>{selectedPurpose === "concussion" && <div><span>Current stage</span><strong>{state.stage} of 6</strong></div>}{lastUpdated && <div><span>Last updated</span><strong>{lastUpdated}</strong></div>}</div></section>
       </div>
 
-      <div className="contentGrid"><Graph points={trend} /><section className="panel evidence"><div className="panelHeader"><div><p className="eyebrow">Transparent by design</p><h2>Evidence and limits</h2></div></div><p>Recommendations are symptom-guided. They do not diagnose concussion or provide medical clearance.</p>{evidence.map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer">{item.title}<small>{item.publisher}</small></a>)}</section></div>
+      <div className="contentGrid"><Graph points={trend} /><section className="panel evidence"><div className="panelHeader"><div><p className="eyebrow">Transparent by design</p><h2>Evidence and limits</h2></div></div><p>{selectedPurpose === "concussion" ? "Recommendations are symptom-guided. They do not diagnose concussion or provide medical clearance." : "Reflections are supportive prompts. They do not diagnose or treat mental-health conditions."}</p>{evidence.map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer">{item.title}<small>{item.publisher}</small></a>)}</section></div>
       {Object.keys(simulations).length > 0 && <SimulationPanel simulations={simulations} recommendation={recommendation} />}
     </main>
   );

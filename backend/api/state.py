@@ -17,7 +17,7 @@ def _response(record) -> StateResponse:
         safety=record.safety,
         recommendation=recommendation,
         explanation=Explainability().generate(record.state, recommendation, record.safety),
-        evidence=[EvidenceReference(**item) for item in evidence_references()],
+        evidence=[EvidenceReference(**item) for item in evidence_references(record.input_data.purpose.value)],
         message="Latest recovery check-in returned.",
     )
 
