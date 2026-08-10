@@ -20,6 +20,7 @@ class SignalFusion:
         cognitive = [data.memory_difficulty, data.concentration_difficulty]
         return {
             "symptom_burden": sum(symptom_values) / len(symptom_values),
+            "peak_symptom": float(max(symptom_values)),
             "cognitive_load": sum(cognitive) / len(cognitive),
             "fatigue": float(data.fatigue),
             "activity_load": min(data.activity_minutes / 60, 10),

@@ -6,6 +6,7 @@ from backend.services.evidence import evidence_references
 from backend.services.explainability import Explainability
 from backend.services.intervention_engine import InterventionEngine
 from backend.services.state_model import RecoveryStateModel
+from backend.services.simulation_engine import SimulationEngine
 from backend.services.state_store import state_store
 
 router = APIRouter(tags=["check-in"])
@@ -17,8 +18,11 @@ def ingest_data(data: InputSchema) -> StateResponse:
     model = RecoveryStateModel()
     state = model.predict(data, previous.state if previous else None)
     safety = InterventionEngine().assess_safety(data)
-    recommendation = "seek_urgent_care" if safety.seek_urgent_care else "pause_and_contact_professional" if safety.status == "contact_professional" else "continue_gently"
+    simulations = SimulationEngine().run(state, data)
+    engine = InterventionEngine()
+    recommendation = engine.recommend(simulations, safety)
     state_store.record(input_data=data, state=state, safety=safety)
+    state_store.set_simulations(simulations)
     explanation = Explainability().generate(state, recommendation, safety)
     return StateResponse(
         state=state,

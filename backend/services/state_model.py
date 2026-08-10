@@ -8,7 +8,8 @@ class RecoveryStateModel:
 
     def predict(self, data: InputSchema, previous: RecoveryState | None = None) -> RecoveryState:
         features = SignalFusion().extract(data)
-        burden = features["symptom_burden"]
+        # A high individual symptom should remain visible even when other symptoms are low.
+        burden = max(features["symptom_burden"], features["peak_symptom"] * 0.7)
         activity_effect = min(features["post_activity_change"] * 0.35, 2.5)
         cognitive_load = min(10.0, features["cognitive_load"] + activity_effect)
         tolerance = max(0.0, min(10.0, 10 - burden - activity_effect))

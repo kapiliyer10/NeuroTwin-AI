@@ -30,6 +30,19 @@ class InterventionEngine:
                 message="Do not use this app as sport clearance. Stop contact-risk activity and follow your healthcare professional's return-to-sport plan.",
                 reasons=["sport activity requires a healthcare professional's clearance"],
             )
+        high_symptoms = []
+        if data.headache >= 7:
+            high_symptoms.append("headache is 7/10 or higher")
+        if data.dizziness >= 7:
+            high_symptoms.append("dizziness is 7/10 or higher")
+        if data.balance_problem >= 7:
+            high_symptoms.append("balance problems are 7/10 or higher")
+        if high_symptoms:
+            return SafetyAssessment(
+                status="contact_professional",
+                message="Pause the activity and contact your healthcare professional about these symptoms.",
+                reasons=high_symptoms,
+            )
         if data.symptoms_worsened or data.symptoms_after_activity >= 3:
             return SafetyAssessment(
                 status="contact_professional",
@@ -46,8 +59,12 @@ class InterventionEngine:
             return "seek_urgent_care"
         if safety.status == "contact_professional":
             return "pause_and_contact_professional"
+        action_cost = {"continue_gently": 0.0, "reduce_activity": 0.55, "rest_and_check_in": 1.0}
         return min(
             simulations,
-            key=lambda action: simulations[action].projected_symptom_burden
-            - (simulations[action].projected_activity_tolerance * 0.1),
+            key=lambda action: (
+                simulations[action].projected_symptom_burden * 0.7
+                + ((10 - simulations[action].projected_activity_tolerance) * 0.2)
+                + action_cost.get(action, 0.5)
+            ),
         )

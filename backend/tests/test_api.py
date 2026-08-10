@@ -99,3 +99,12 @@ def test_sport_activity_never_implies_clearance() -> None:
     body = response.json()
     assert body["safety"]["status"] == "contact_professional"
     assert body["recommendation"] == "pause_and_contact_professional"
+
+
+def test_high_symptom_values_trigger_caution_without_checkbox() -> None:
+    response = client.post("/ingest", json={"headache": 7, "activity_type": "work"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["safety"]["status"] == "contact_professional"
+    assert body["recommendation"] == "pause_and_contact_professional"
+    assert body["state"]["symptom_burden"] >= 4.9
