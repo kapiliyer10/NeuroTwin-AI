@@ -96,13 +96,22 @@ const symptomFields = [
 ];
 
 const wellbeingFields = [
-  ["stress_level", "Stress level"],
-  ["mood", "Mood today"],
-  ["sleep_quality", "Sleep quality"],
-  ["concentration_difficulty", "Focus difficulty"],
-  ["workload_pressure", "Workload pressure"],
-  ["social_connection", "Social connection"],
-];
+  ["stress_level", "Stress level", "0 none · 10 overwhelming"],
+  ["mood", "Mood today", "0 very low · 10 positive"],
+  ["sleep_quality", "Sleep quality", "0 poor · 10 restorative"],
+  ["concentration_difficulty", "Focus difficulty", "0 none · 10 severe"],
+  ["workload_pressure", "Workload pressure", "0 none · 10 overwhelming"],
+  ["social_connection", "Social connection", "0 isolated · 10 connected"],
+] as const;
+
+const recoveryStages = [
+  [1, "Daily activities"],
+  [2, "Light aerobic activity"],
+  [3, "Individual activity, no head-impact risk"],
+  [4, "Non-contact practice"],
+  [5, "Unrestricted practice"],
+  [6, "Return to sport"],
+] as const;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, options);
@@ -253,10 +262,10 @@ export default function Dashboard() {
             <label>Activity type<select value={form.activity_type} onChange={(event) => updateField("activity_type", event.target.value)}>{["daily", "school", "work", "screen", "walking", "exercise", "sport"].map((value) => <option key={value}>{value}</option>)}</select></label>
             <label>Minutes today<input type="number" min="0" max="1440" value={form.activity_minutes} onChange={(event) => updateField("activity_minutes", Number(event.target.value))} /></label>
           </div>
-          <div className="symptomGrid">{(selectedPurpose === "concussion" ? symptomFields : wellbeingFields).map(([name, label]) => <label key={name}>{label}<input type="range" min="0" max="10" value={form[name as keyof typeof form] as number} onChange={(event) => updateField(name, Number(event.target.value))} /><output>{form[name as keyof typeof form]}</output></label>)}</div>
+          <div className="symptomGrid">{(selectedPurpose === "concussion" ? symptomFields : wellbeingFields).map((field) => { const [name, label, hint] = field; return <label key={name}>{label}<input type="range" min="0" max="10" value={form[name as keyof typeof form] as number} onChange={(event) => updateField(name, Number(event.target.value))} /><output>{form[name as keyof typeof form]}</output>{hint && <small className="fieldHint">{hint}</small>}</label>; })}</div>
           <div className="formRow twoColumns">
             <label>Symptoms after activity<input type="range" min="0" max="10" value={form.symptoms_after_activity} onChange={(event) => updateField("symptoms_after_activity", Number(event.target.value))} /><output>{form.symptoms_after_activity}</output></label>
-            {selectedPurpose === "concussion" ? <label>Recovery stage<select value={form.recovery_stage} onChange={(event) => updateField("recovery_stage", Number(event.target.value))}>{[1, 2, 3, 4, 5, 6].map((stage) => <option key={stage} value={stage}>Stage {stage}</option>)}</select><small className="fieldHint">Use the stage provided by your healthcare professional.</small></label> : <label>Check-in context<select value={form.activity_type} onChange={(event) => updateField("activity_type", event.target.value)}>{["daily", "school", "work", "screen"].map((value) => <option key={value}>{value}</option>)}</select><small className="fieldHint">Choose the context that best matches today.</small></label>}
+            {selectedPurpose === "concussion" ? <label>Recovery stage<select value={form.recovery_stage} onChange={(event) => updateField("recovery_stage", Number(event.target.value))}>{recoveryStages.map(([stage, label]) => <option key={stage} value={stage}>Stage {stage}: {label}</option>)}</select><small className="fieldHint">Use the stage provided by your healthcare professional. This app does not clear you to advance.</small></label> : <label>Check-in context<select value={form.activity_type} onChange={(event) => updateField("activity_type", event.target.value)}>{["daily", "school", "work", "screen"].map((value) => <option key={value}>{value}</option>)}</select><small className="fieldHint">Choose the context that best matches today.</small></label>}
           </div>
           {selectedPurpose === "concussion" && <><label className="checkbox"><input type="checkbox" checked={form.clinician_evaluated} onChange={(event) => updateField("clinician_evaluated", event.target.checked)} /> I have been evaluated by a healthcare professional</label><label className="checkbox"><input type="checkbox" checked={form.symptoms_worsened} onChange={(event) => updateField("symptoms_worsened", event.target.checked)} /> My symptoms are worse than my recent baseline</label><details className="safetyDetails"><summary>Safety check</summary><div className="checkboxList">{([["severe_or_worsening_headache", "Severe or worsening headache"], ["repeated_vomiting", "Repeated vomiting"], ["seizure_or_fainting", "Seizure or fainting"], ["confusion_or_slurred_speech", "Confusion or slurred speech"], ["weakness_numbness_or_vision_change", "Weakness, numbness, or vision changes"]] as const).map(([name, label]) => <label className="checkbox" key={name}><input type="checkbox" checked={form[name]} onChange={(event) => updateField(name, event.target.checked)} /> {label}</label>)}</div></details></>}
           {selectedPurpose === "mental_wellbeing" && <details className="safetyDetails"><summary>Private safety check</summary><div className="checkboxList"><label className="checkbox"><input type="checkbox" checked={form.feeling_unsafe} onChange={(event) => updateField("feeling_unsafe", event.target.checked)} /> I feel unsafe right now</label><label className="checkbox"><input type="checkbox" checked={form.self_harm_thoughts} onChange={(event) => updateField("self_harm_thoughts", event.target.checked)} /> I am having thoughts of harming myself</label><small className="fieldHint">If either is selected, the app will encourage immediate local support.</small></div></details>}
@@ -267,7 +276,8 @@ export default function Dashboard() {
       </div>
 
       <div className="contentGrid"><Graph points={trend} /><section className="panel evidence"><div className="panelHeader"><div><p className="eyebrow">Transparent by design</p><h2>Evidence and limits</h2></div></div><p>{selectedPurpose === "concussion" ? "Recommendations are symptom-guided. They do not diagnose concussion or provide medical clearance." : "Reflections are supportive prompts. They do not diagnose or treat mental-health conditions."}</p>{evidence.map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer">{item.title}<small>{item.publisher}</small></a>)}</section></div>
-      {Object.keys(simulations).length > 0 && <SimulationPanel simulations={simulations} recommendation={recommendation} />}
+      {safety.status === "urgent" && <section className="panel urgentPanel"><p className="eyebrow">Safety takes priority</p><h2>Activity comparisons are hidden</h2><p>Follow the urgent-care guidance above. The app will not compare activity options while a serious safety concern is active.</p></section>}
+      {Object.keys(simulations).length > 0 && safety.status !== "urgent" && <SimulationPanel simulations={simulations} recommendation={recommendation} />}
     </main>
   );
 }

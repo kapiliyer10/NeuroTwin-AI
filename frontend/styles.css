@@ -41,6 +41,8 @@ h3 { font-size: 1rem; margin-bottom: 0; }
 .alert.urgent { background: #fff0ed; border-color: #b23b2e; color: #7b251d; }
 .alert.error { background: #fff0ed; border-color: #b23b2e; color: #7b251d; }
 .alert.success { background: #e8f5ef; border-color: #287a5c; color: #205b45; }
+.urgentPanel { border-color: #e1b8b0; }
+.urgentPanel p:last-child { color: #6a7c7d; line-height: 1.5; margin-bottom: 0; }
 .mainGrid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr); }
 .contentGrid { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.75fr); }
 .panelHeader { align-items: flex-start; display: flex; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
