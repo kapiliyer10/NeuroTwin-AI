@@ -108,3 +108,4 @@ def test_high_symptom_values_trigger_caution_without_checkbox() -> None:
     assert body["safety"]["status"] == "contact_professional"
     assert body["recommendation"] == "pause_and_contact_professional"
     assert body["state"]["symptom_burden"] >= 4.9
+    assert "increased after activity" not in body["explanation"]
