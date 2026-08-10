@@ -99,6 +99,8 @@ export default function Dashboard() {
   const [simulations, setSimulations] = useState<Record<string, SimulationOutcome>>({});
   const [recommendation, setRecommendation] = useState("continue_gently");
   const [explanation, setExplanation] = useState("Your recovery timeline will appear here after your first check-in.");
+  const [hasCheckIn, setHasCheckIn] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -124,6 +126,8 @@ export default function Dashboard() {
       setRecommendation(result.recommendation);
       setExplanation(result.explanation);
       setEvidence(result.evidence);
+      setHasCheckIn(true);
+      setLastUpdated(new Date().toLocaleString([], { dateStyle: "medium", timeStyle: "short" }));
       const simulation = await request<{ simulations: Record<string, SimulationOutcome> }>("/simulate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
       setSimulations(simulation.simulations);
       await refreshHistory();
@@ -142,6 +146,8 @@ export default function Dashboard() {
     setSimulations({});
     setState(initialState);
     setSafety({ status: "monitor", message: "Your local recovery data was deleted.", reasons: [], seek_urgent_care: false });
+    setHasCheckIn(false);
+    setLastUpdated("");
   }
 
   useEffect(() => {
@@ -162,7 +168,7 @@ export default function Dashboard() {
     <main className="dashboard">
       <header className="intro">
         <div>
-          <p className="eyebrow">Symptom-guided recovery support</p>
+          <div className="eyebrowLine"><p className="eyebrow">Symptom-guided recovery support</p><span className="demoBadge">Prototype demo</span></div>
           <h1>NeuroTwin Recovery</h1>
           <p className="subtitle">A private, evidence-grounded companion for returning to daily activity after a clinician-evaluated concussion.</p>
         </div>
@@ -182,7 +188,7 @@ export default function Dashboard() {
           <div className="symptomGrid">{symptomFields.map(([name, label]) => <label key={name}>{label}<input type="range" min="0" max="10" value={form[name as keyof typeof form] as number} onChange={(event) => updateField(name, Number(event.target.value))} /><output>{form[name as keyof typeof form]}</output></label>)}</div>
           <div className="formRow twoColumns">
             <label>Symptoms after activity<input type="range" min="0" max="10" value={form.symptoms_after_activity} onChange={(event) => updateField("symptoms_after_activity", Number(event.target.value))} /><output>{form.symptoms_after_activity}</output></label>
-            <label>Recovery stage<select value={form.recovery_stage} onChange={(event) => updateField("recovery_stage", Number(event.target.value))}>{[1, 2, 3, 4, 5, 6].map((stage) => <option key={stage} value={stage}>Stage {stage}</option>)}</select></label>
+            <label>Recovery stage<select value={form.recovery_stage} onChange={(event) => updateField("recovery_stage", Number(event.target.value))}>{[1, 2, 3, 4, 5, 6].map((stage) => <option key={stage} value={stage}>Stage {stage}</option>)}</select><small className="fieldHint">Use the stage provided by your healthcare professional.</small></label>
           </div>
           <label className="checkbox"><input type="checkbox" checked={form.clinician_evaluated} onChange={(event) => updateField("clinician_evaluated", event.target.checked)} /> I have been evaluated by a healthcare professional</label>
           <label className="checkbox"><input type="checkbox" checked={form.symptoms_worsened} onChange={(event) => updateField("symptoms_worsened", event.target.checked)} /> My symptoms are worse than my recent baseline</label>
@@ -190,7 +196,7 @@ export default function Dashboard() {
           <button className="primaryButton" type="submit" disabled={isLoading}>{isLoading ? "Saving check-in..." : "Save check-in"}</button>
         </form>
 
-        <section className="panel nextStep"><div className="panelHeader"><div><p className="eyebrow">Your next step</p><h2>{recommendation.replaceAll("_", " ")}</h2></div><span className={`status ${safety.status}`}>{safety.status.replaceAll("_", " ")}</span></div><p>{explanation}</p><div className="stateList"><div><span>Symptom burden</span><strong>{state.symptom_burden}/10</strong></div><div><span>Activity tolerance</span><strong>{state.activity_tolerance}/10</strong></div><div><span>Recovery trend</span><strong>{state.trend}</strong></div><div><span>Current stage</span><strong>{state.stage} of 6</strong></div></div></section>
+        <section className="panel nextStep"><div className="panelHeader"><div><p className="eyebrow">Your next step</p><h2>{hasCheckIn ? recommendation.replaceAll("_", " ") : "Complete a check-in to begin"}</h2></div>{hasCheckIn && <span className={`status ${safety.status}`}>{safety.status.replaceAll("_", " ")}</span>}</div><p>{hasCheckIn ? explanation : "Your recommendation will be based on your symptoms and activity after you save your first check-in."}</p><div className="stateList"><div><span>Symptom burden</span><strong>{hasCheckIn ? `${state.symptom_burden}/10` : "Not recorded"}</strong></div><div><span>Prototype tolerance estimate</span><strong>{hasCheckIn ? `${state.activity_tolerance}/10` : "Not recorded"}</strong></div><div><span>Recovery trend</span><strong>{hasCheckIn ? state.trend : "Waiting"}</strong></div><div><span>Current stage</span><strong>{state.stage} of 6</strong></div>{lastUpdated && <div><span>Last updated</span><strong>{lastUpdated}</strong></div>}</div></section>
       </div>
 
       <div className="contentGrid"><Graph points={trend} /><section className="panel evidence"><div className="panelHeader"><div><p className="eyebrow">Transparent by design</p><h2>Evidence and limits</h2></div></div><p>Recommendations are symptom-guided. They do not diagnose concussion or provide medical clearance.</p>{evidence.map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer">{item.title}<small>{item.publisher}</small></a>)}</section></div>
