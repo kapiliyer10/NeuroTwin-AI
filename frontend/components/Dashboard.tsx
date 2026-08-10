@@ -123,6 +123,7 @@ export default function Dashboard() {
   const [hasCheckIn, setHasCheckIn] = useState(false);
   const [lastUpdated, setLastUpdated] = useState("");
   const [error, setError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   async function refreshHistory() {
@@ -161,14 +162,23 @@ export default function Dashboard() {
 
   async function deleteData() {
     if (!window.confirm("Delete all recovery check-ins from this demo?")) return;
-    await fetch(`${API_BASE_URL}/state?user_id=${encodeURIComponent(form.user_id)}`, { method: "DELETE" });
-    setHistory([]);
-    setEvidence([]);
-    setSimulations({});
-    setState(initialState);
-    setSafety({ status: "monitor", message: "Your local recovery data was deleted.", reasons: [], seek_urgent_care: false });
-    setHasCheckIn(false);
-    setLastUpdated("");
+    setError("");
+    setStatusMessage("");
+    try {
+      const response = await fetch(`${API_BASE_URL}/state?user_id=${encodeURIComponent(form.user_id)}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("The server could not delete your recovery data.");
+      setHistory([]);
+      setEvidence([]);
+      setSimulations({});
+      setState(initialState);
+      setSafety({ status: "monitor", message: "Your local recovery data was deleted.", reasons: [], seek_urgent_care: false });
+      setHasCheckIn(false);
+      setLastUpdated("");
+      setForm({ ...initialForm, purpose: selectedPurpose ?? "concussion" });
+      setStatusMessage("Your recovery data was deleted.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to delete your data.");
+    }
   }
 
   useEffect(() => {
@@ -201,6 +211,8 @@ export default function Dashboard() {
     setRecommendation("continue_gently");
     setExplanation("Your check-in will appear here after you choose a purpose.");
     setLastUpdated("");
+    setError("");
+    setStatusMessage("");
   }
 
   if (!selectedPurpose) {
@@ -214,6 +226,7 @@ export default function Dashboard() {
           <button type="button" className="purposeChoice" onClick={() => choosePurpose("mental_wellbeing")}><span className="purposeNumber">02</span><strong>Mental wellbeing</strong><small>Reflect on stress, mood, sleep, workload, and connection.</small></button>
         </div>
         <p className="purposeLimit">This prototype offers supportive guidance, not diagnosis or treatment.</p>
+        {statusMessage && <p className="successMessage" role="status">{statusMessage}</p>}
       </main>
     );
   }
@@ -230,6 +243,7 @@ export default function Dashboard() {
       </header>
 
       {error && <div className="alert error" role="alert">{error}</div>}
+      {statusMessage && <div className="alert success" role="status">{statusMessage}</div>}
       {safety.status !== "monitor" && <div className={`alert ${safety.seek_urgent_care ? "urgent" : "caution"}`} role="alert"><strong>{safety.message}</strong>{safety.reasons.length > 0 && <span> Detected: {safety.reasons.join(", ")}.</span>}</div>}
 
       <div className="mainGrid">
