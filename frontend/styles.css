@@ -23,6 +23,7 @@ button:disabled { cursor: wait; opacity: 0.65; }
 .purposeChoice small, .purposeLimit { color: #6a7c7d; line-height: 1.5; }
 .purposeLimit { font-size: 0.82rem; }
 .intro { align-items: flex-start; display: flex; justify-content: space-between; gap: 2rem; }
+.headerActions { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; }
 .eyebrowLine { align-items: center; display: flex; flex-wrap: wrap; gap: 0.65rem; }
 .eyebrow { color: #55716e; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.08em; margin: 0 0 0.35rem; text-transform: uppercase; }
 .demoBadge { background: #eaf1ef; border: 1px solid #c9d9d4; border-radius: 999px; color: #456662; font-size: 0.7rem; font-weight: 800; padding: 0.28rem 0.5rem; text-transform: uppercase; }

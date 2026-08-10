@@ -190,6 +190,19 @@ export default function Dashboard() {
     setForm((current) => ({ ...current, purpose }));
   }
 
+  function changePurpose() {
+    setSelectedPurpose(null);
+    setHasCheckIn(false);
+    setHistory([]);
+    setEvidence([]);
+    setSimulations({});
+    setState(initialState);
+    setSafety({ status: "monitor", message: "Complete a check-in to begin.", reasons: [], seek_urgent_care: false });
+    setRecommendation("continue_gently");
+    setExplanation("Your check-in will appear here after you choose a purpose.");
+    setLastUpdated("");
+  }
+
   if (!selectedPurpose) {
     return (
       <main className="purposeGate">
@@ -213,7 +226,7 @@ export default function Dashboard() {
           <h1>NeuroTwin {selectedPurpose === "concussion" ? "Recovery" : "Wellbeing"}</h1>
           <p className="subtitle">{selectedPurpose === "concussion" ? "A private, evidence-grounded companion for returning to daily activity after a clinician-evaluated concussion." : "A private reflection space for noticing stress, mood, sleep, workload, and connection without diagnosing mental health conditions."}</p>
         </div>
-        <button className="quietButton" type="button" onClick={deleteData}>Delete my data</button>
+        <div className="headerActions"><button className="quietButton" type="button" onClick={changePurpose}>Change purpose</button><button className="quietButton" type="button" onClick={deleteData}>Delete my data</button></div>
       </header>
 
       {error && <div className="alert error" role="alert">{error}</div>}
