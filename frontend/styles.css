@@ -51,6 +51,13 @@ h3 { font-size: 1rem; margin-bottom: 0; }
 .twoColumns { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 label { color: #3b5758; display: grid; font-size: 0.83rem; font-weight: 700; gap: 0.4rem; }
 .fieldHint { color: #6a7c7d; font-size: 0.73rem; font-weight: 500; line-height: 1.35; }
+.scaleGuide { background: #f7faf9; border: 1px solid #d7e4e0; border-radius: 6px; margin-bottom: 1rem; padding: 0.7rem 0.8rem; }
+.scaleGuide summary { color: #355a58; cursor: pointer; font-size: 0.82rem; font-weight: 800; }
+.scaleRows { display: grid; gap: 0.45rem; grid-template-columns: repeat(5, minmax(0, 1fr)); padding: 0.75rem 0; }
+.scaleRows span { color: #536b6c; font-size: 0.76rem; }
+.scaleRows b { color: #176b64; display: block; font-size: 0.9rem; }
+.scaleGuideText { color: #536b6c; font-size: 0.78rem; line-height: 1.45; padding: 0.6rem 0 0.2rem; }
+.scaleGuideText p { margin-bottom: 0.5rem; }
 select, input[type="number"] { background: #fbfdfc; border: 1px solid #b9cbc7; border-radius: 5px; color: #1d2c2f; min-height: 2.55rem; padding: 0.45rem 0.6rem; }
 .symptomGrid { display: grid; gap: 0.9rem 1.1rem; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-bottom: 1rem; }
 .symptomGrid label { grid-template-columns: 1fr auto; }
