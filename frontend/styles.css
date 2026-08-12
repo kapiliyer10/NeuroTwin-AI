@@ -153,6 +153,7 @@ body { background: #eef4f1; color: #183b3b; }
 .meterTrack { background: #e2ebe8; border-radius: 999px; height: 0.42rem; margin-top: 0.55rem; overflow: hidden; }
 .meterTrack span { background: #176b64; border-radius: inherit; display: block; height: 100%; transition: width 500ms ease; }
 .mental_wellbeing .meterTrack span { background: #806486; }
+.cadenceNote { background: #f6f0f7; border-left: 3px solid #806486; color: #684e6e; font-size: 0.76rem; line-height: 1.45; margin: 0.8rem 0; padding: 0.6rem 0.7rem; }
 .purposeGate { max-width: 980px; position: relative; }
 .purposeGate::before { background: #176b64; content: ""; height: 4px; left: 0; position: absolute; right: 0; top: 0; }
 .purposeGate h1 { font-size: clamp(3.4rem, 10vw, 7.5rem); letter-spacing: -0.06em; margin-bottom: 0.8rem; }
