@@ -109,3 +109,72 @@ dd { font-weight: 800; margin: 0; }
 
 @media (max-width: 840px) { .mainGrid, .contentGrid { grid-template-columns: 1fr; } }
 @media (max-width: 620px) { .dashboard, .purposeGate { padding: 1rem; } .intro { flex-direction: column; gap: 1rem; } .twoColumns, .symptomGrid, .simulationGrid, .purposeChoices { grid-template-columns: 1fr; } h1 { font-size: 3rem; } }
+
+/* Visual polish: warm, mode-aware surfaces with a quieter reading rhythm. */
+body { background: #eef4f1; color: #183b3b; }
+.dashboard { position: relative; padding-top: 2.5rem; }
+.dashboard::before { background: #176b64; content: ""; height: 4px; left: 0; position: absolute; right: 0; top: 0; }
+.dashboard.mental_wellbeing::before { background: #806486; }
+.intro { align-items: flex-end; padding: 0.5rem 0 0.75rem; }
+.intro h1 { font-size: clamp(2.8rem, 6vw, 5.2rem); letter-spacing: -0.04em; }
+.subtitle { font-size: 1.02rem; }
+.headerActions { padding-bottom: 0.35rem; }
+.quietButton { background: rgba(255,255,255,0.58); transition: background 160ms ease, border-color 160ms ease, transform 160ms ease; }
+.quietButton:hover, .quietButton:focus-visible { background: #fff; border-color: #176b64; transform: translateY(-1px); }
+.mental_wellbeing .quietButton:hover, .mental_wellbeing .quietButton:focus-visible { border-color: #806486; }
+.modeRail { align-items: center; background: #e4efeb; border: 1px solid #c9ded7; border-radius: 12px; display: flex; gap: 0.8rem; margin: 0.25rem 0 0.25rem; padding: 0.7rem 0.85rem; }
+.mental_wellbeing .modeRail { background: #eee8f0; border-color: #d9cbdc; }
+.modeIcon { align-items: center; background: #176b64; border-radius: 9px; color: white; display: inline-flex; font-size: 0.82rem; font-weight: 900; height: 2rem; justify-content: center; width: 2rem; }
+.mental_wellbeing .modeIcon { background: #806486; }
+.modeRail div { display: grid; gap: 0.1rem; }
+.modeRail strong { color: #173f42; font-size: 0.84rem; }
+.modeRail small { color: #5e7471; font-size: 0.76rem; }
+.modeStep { color: #176b64; font-size: 0.74rem; font-weight: 800; margin-left: auto; }
+.mental_wellbeing .modeStep { color: #806486; }
+.panel, .metric { box-shadow: 0 8px 24px rgba(33, 75, 70, 0.045); }
+.checkIn, .nextStep { border-top: 3px solid #b8d9d0; }
+.mental_wellbeing .checkIn, .mental_wellbeing .nextStep { border-top-color: #d4c1d8; }
+.checkIn { padding: 1.45rem; }
+.nextStep { background: #fbfdfc; padding: 1.45rem; }
+.stepVisual { align-items: center; border-radius: 9px; display: flex; gap: 0.7rem; margin: 0.2rem 0 1rem; padding: 0.7rem 0.8rem; }
+.stepVisual.isEmpty { background: #f1f6f4; color: #6a7c7d; }
+.stepVisual.isReady { background: #eaf5f0; color: #236452; }
+.mental_wellbeing .stepVisual.isReady { background: #f3edf4; color: #684e6e; }
+.stepVisual span:last-child { font-size: 0.77rem; font-weight: 700; }
+.stepPulse { background: #b7ccc7; border-radius: 999px; height: 0.65rem; position: relative; width: 0.65rem; }
+.stepVisual.isReady .stepPulse { animation: breathe 2.4s ease-in-out infinite; background: #176b64; box-shadow: 0 0 0 5px rgba(23,107,100,0.12); }
+.mental_wellbeing .stepVisual.isReady .stepPulse { background: #806486; box-shadow: 0 0 0 5px rgba(128,100,134,0.12); }
+@keyframes breathe { 0%, 100% { transform: scale(0.9); } 50% { transform: scale(1.15); } }
+.balanceMeter { border-top: 1px solid #e0e9e6; margin-top: 1rem; padding-top: 0.85rem; }
+.balanceMeter > div:first-child { align-items: center; display: flex; justify-content: space-between; }
+.balanceMeter span { color: #6a7c7d; font-size: 0.78rem; }
+.balanceMeter strong { color: #176b64; font-size: 0.9rem; }
+.mental_wellbeing .balanceMeter strong { color: #806486; }
+.meterTrack { background: #e2ebe8; border-radius: 999px; height: 0.42rem; margin-top: 0.55rem; overflow: hidden; }
+.meterTrack span { background: #176b64; border-radius: inherit; display: block; height: 100%; transition: width 500ms ease; }
+.mental_wellbeing .meterTrack span { background: #806486; }
+.purposeGate { max-width: 980px; position: relative; }
+.purposeGate::before { background: #176b64; content: ""; height: 4px; left: 0; position: absolute; right: 0; top: 0; }
+.purposeGate h1 { font-size: clamp(3.4rem, 10vw, 7.5rem); letter-spacing: -0.06em; margin-bottom: 0.8rem; }
+.purposeLead { color: #315e5c; font-size: clamp(1.2rem, 2.5vw, 1.65rem); max-width: 620px; }
+.purposeChoices { gap: 1.2rem; }
+.purposeChoice { background: #fbfdfc; min-height: 220px; overflow: hidden; position: relative; }
+.purposeChoice::after { background: #d9eee8; border-radius: 50%; content: ""; height: 130px; position: absolute; right: -35px; top: -35px; width: 130px; }
+.purposeChoice:nth-child(2)::after { background: #eadfec; }
+.purposeChoice > * { position: relative; z-index: 1; }
+.purposeChoice strong { font-size: 1.45rem; margin-top: 1.2rem; }
+.purposeChoice small { max-width: 270px; }
+.purposeChoice:hover, .purposeChoice:focus-visible { box-shadow: 0 12px 28px rgba(23, 107, 100, 0.14); transform: translateY(-4px); }
+.purposeChoice:nth-child(2):hover, .purposeChoice:nth-child(2):focus-visible { border-color: #806486; box-shadow: 0 12px 28px rgba(128, 100, 134, 0.14); }
+input[type="range"] { height: 0.55rem; }
+input[type="range"]::-webkit-slider-thumb { appearance: none; background: #176b64; border: 4px solid #e4f3ef; border-radius: 50%; box-shadow: 0 1px 4px rgba(0,0,0,0.18); height: 1.1rem; width: 1.1rem; }
+.mental_wellbeing input[type="range"] { accent-color: #806486; }
+.mental_wellbeing input[type="range"]::-webkit-slider-thumb { background: #806486; border-color: #f1eaf2; }
+.primaryButton { box-shadow: 0 5px 12px rgba(23,107,100,0.16); transition: transform 160ms ease, box-shadow 160ms ease; }
+.primaryButton:hover, .primaryButton:focus-visible { box-shadow: 0 8px 16px rgba(23,107,100,0.22); transform: translateY(-1px); }
+.mental_wellbeing .primaryButton { background: #806486; box-shadow: 0 5px 12px rgba(128,100,134,0.16); }
+.mental_wellbeing .primaryButton:hover, .mental_wellbeing .primaryButton:focus-visible { box-shadow: 0 8px 16px rgba(128,100,134,0.22); }
+.chartWrap { background: #fbfdfc; border: 1px solid #e0e9e6; border-radius: 9px; padding: 0.55rem; }
+.evidence a { transition: background 160ms ease, padding-left 160ms ease; }
+.evidence a:hover { background: #f4f8f6; padding-left: 0.35rem; }
+@media (max-width: 620px) { .modeRail { align-items: flex-start; } .modeStep { font-size: 0.68rem; text-align: right; } .checkIn, .nextStep { padding: 1rem; } }

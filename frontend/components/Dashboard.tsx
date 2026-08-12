@@ -241,7 +241,7 @@ export default function Dashboard() {
   }
 
   return (
-    <main className="dashboard">
+    <main className={`dashboard ${selectedPurpose}`}>
       <header className="intro">
         <div>
           <div className="eyebrowLine"><p className="eyebrow">{selectedPurpose === "concussion" ? "Concussion recovery support" : "Mental wellbeing support"}</p><span className="demoBadge">Prototype demo</span></div>
@@ -250,6 +250,8 @@ export default function Dashboard() {
         </div>
         <div className="headerActions"><button className="quietButton" type="button" onClick={changePurpose}>Change purpose</button><button className="quietButton" type="button" onClick={deleteData}>Delete my data</button></div>
       </header>
+
+      <div className="modeRail" aria-label="Current support mode"><span className="modeIcon">{selectedPurpose === "concussion" ? "R" : "W"}</span><div><strong>{selectedPurpose === "concussion" ? "Recovery rhythm" : "Wellbeing rhythm"}</strong><small>{hasCheckIn ? "Your latest check-in is shaping today's view" : "A small check-in can make the next step clearer"}</small></div><span className="modeStep">{hasCheckIn ? "Updated" : "Ready when you are"}</span></div>
 
       {error && <div className="alert error" role="alert">{error}</div>}
       {statusMessage && <div className="alert success" role="status">{statusMessage}</div>}
@@ -273,7 +275,7 @@ export default function Dashboard() {
           <button className="primaryButton" type="submit" disabled={isLoading}>{isLoading ? "Saving check-in..." : "Save check-in"}</button>
         </form>
 
-        <section className="panel nextStep"><div className="panelHeader"><div><p className="eyebrow">Your next step</p><h2>{hasCheckIn ? recommendation.replaceAll("_", " ") : "Complete a check-in to begin"}</h2></div>{hasCheckIn && <span className={`status ${safety.status}`}>{safety.status.replaceAll("_", " ")}</span>}</div><p>{hasCheckIn ? explanation : "Your recommendation will be based on your check-in after you save it."}</p><div className="stateList"><div><span>{selectedPurpose === "concussion" ? "Symptom burden" : "Wellbeing strain"}</span><strong>{hasCheckIn ? `${state.symptom_burden}/10` : "Not recorded"}</strong></div><div><span>{selectedPurpose === "concussion" ? "Prototype tolerance estimate" : "Prototype capacity estimate"}</span><strong>{hasCheckIn ? `${state.activity_tolerance}/10` : "Not recorded"}</strong></div><div><span>Trend</span><strong>{hasCheckIn ? state.trend : "Waiting"}</strong></div>{selectedPurpose === "concussion" && <div><span>Current stage</span><strong>{state.stage} of 6</strong></div>}{lastUpdated && <div><span>Last updated</span><strong>{lastUpdated}</strong></div>}</div></section>
+        <section className="panel nextStep"><div className="panelHeader"><div><p className="eyebrow">Your next step</p><h2>{hasCheckIn ? recommendation.replaceAll("_", " ") : "Complete a check-in to begin"}</h2></div>{hasCheckIn && <span className={`status ${safety.status}`}>{safety.status.replaceAll("_", " ")}</span>}</div><div className={`stepVisual ${hasCheckIn ? "isReady" : "isEmpty"}`}><span className="stepPulse" aria-hidden="true" /><span>{hasCheckIn ? (selectedPurpose === "concussion" ? "A gentle, symptom-guided pace" : "A gentle, self-directed pause") : "Your check-in will become your starting point"}</span></div><p>{hasCheckIn ? explanation : "Your recommendation will be based on your check-in after you save it."}</p><div className="stateList"><div><span>{selectedPurpose === "concussion" ? "Symptom burden" : "Wellbeing strain"}</span><strong>{hasCheckIn ? `${state.symptom_burden}/10` : "Not recorded"}</strong></div><div><span>{selectedPurpose === "concussion" ? "Prototype tolerance estimate" : "Prototype capacity estimate"}</span><strong>{hasCheckIn ? `${state.activity_tolerance}/10` : "Not recorded"}</strong></div><div><span>Trend</span><strong>{hasCheckIn ? state.trend : "Waiting"}</strong></div>{selectedPurpose === "concussion" && <div><span>Current stage</span><strong>{state.stage} of 6</strong></div>}{lastUpdated && <div><span>Last updated</span><strong>{lastUpdated}</strong></div>}</div>{hasCheckIn && <div className="balanceMeter"><div><span>{selectedPurpose === "concussion" ? "Current balance" : "Today's balance"}</span><strong>{Math.round(state.activity_tolerance * 10)}%</strong></div><div className="meterTrack"><span style={{ width: `${state.activity_tolerance * 10}%` }} /></div></div>}</section>
       </div>
 
       <div className="contentGrid"><Graph points={trend} purpose={selectedPurpose} /><section className="panel evidence"><div className="panelHeader"><div><p className="eyebrow">Transparent by design</p><h2>Evidence and limits</h2></div></div><p>{selectedPurpose === "concussion" ? "Recommendations are symptom-guided. They do not diagnose concussion or provide medical clearance." : "Reflections are supportive prompts. They do not diagnose or treat mental-health conditions."}</p>{evidence.map((item) => <a key={item.url} href={item.url} target="_blank" rel="noreferrer">{item.title}<small>{item.publisher}</small></a>)}</section></div>
