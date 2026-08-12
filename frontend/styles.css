@@ -81,10 +81,17 @@ output { align-self: end; color: #176b64; font-size: 1rem; font-weight: 800; gri
 .chart { display: block; height: auto; width: 100%; }
 .chartWrap { position: relative; }
 .chartLabel { fill: #6a7c7d; font-size: 11px; }
+.timelineCount { background: #edf5f2; border-radius: 999px; color: #176b64; font-size: 0.72rem; font-weight: 800; padding: 0.35rem 0.55rem; white-space: nowrap; }
+.mental_wellbeing .timelineCount { background: #f1eaf2; color: #806486; }
+.timelineExplain { color: #536b6c; font-size: 0.8rem; line-height: 1.45; margin: -0.35rem 0 0.8rem; max-width: 650px; }
 .chartEmpty { align-items: center; color: #6a7c7d; display: flex; font-size: 0.86rem; inset: 0; justify-content: center; pointer-events: none; position: absolute; }
 .chartHint, .panelNote { color: #6a7c7d; font-size: 0.78rem; line-height: 1.4; }
 .axis { stroke: #cbd9d5; stroke-width: 1; }
 .line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 4; }
+.point { stroke: #fbfdfc; stroke-width: 2; }
+.burdenPoint { fill: #b85445; }
+.tolerancePoint { fill: #176b64; }
+.mental_wellbeing .tolerancePoint { fill: #806486; }
 .burden { stroke: #b85445; }
 .tolerance { stroke: #176b64; }
 .legend { display: flex; flex-wrap: wrap; gap: 1rem; }
